@@ -1,6 +1,7 @@
 from __future__ import annotations
-from math import sqrt
+from dataclasses import dataclass
 import numbers
+import math
 
 
 class Vec3:
@@ -32,7 +33,7 @@ class Vec3:
         return Vec3(self.x/scalar, self.y/scalar, self.z/scalar)
 
     def length(self) -> numbers.Real:
-        return sqrt(self.x**2 + self.y**2 + self.z**2)
+        return math.sqrt(self.x**2 + self.y**2 + self.z**2)
     
     def length_squared(self) -> numbers.Real:
         return self.x**2 + self.y**2 + self.z**2
@@ -68,4 +69,23 @@ class Ray:
 
     def at(self, t: numbers.Real) -> Vec3:
         return self.origin + t*self.direction
+
+
+@dataclass
+class Interval:
+    min: numbers.Real = +math.inf
+    max: numbers.Real = -math.inf
     
+    def size(self) -> numbers.Real:
+        return self.max - self.min
+
+    def contains(self, x: numbers.Real) -> bool:
+        return self.min <= x <= self.max
+
+    def surrounds(self, x: numbers.Real) -> bool:
+        return self.min < x < self.max
+
+
+Interval.empty = Interval(+math.inf, -math.inf)
+Interval.universe = Interval(-math.inf, +math.inf)
+

@@ -1,20 +1,13 @@
 from PIL import Image
-from utils import Color, Ray, Point3, Vec3, unit_vector, dot
-import numbers
+from utils import Color, Ray, Point3, Vec3, unit_vector
+from hittable import Hittable, HittableList, Sphere, Interval
+import math
 
 
-def hit_sphere(center: Point3, radius: numbers.Real, r: Ray):
-    oc = center - r.origin
-    a = dot(r.direction, r.direction)
-    b = -2 * dot(r.direction, oc)
-    c = dot(oc, oc) - radius*radius
-    d = b*b - 4*a*c
-    return d >= 0
-
-
-def ray_color(r: Ray):
-    if hit_sphere(Point3(0.3, 1, -3), 0.5, r):
-        return Color(0, 0, 0)
+def ray_color(r: Ray, world: Hittable):
+    rec = world.hit(r, Interval(0, math.inf))
+    if rec is not None:
+        return 0.5 * (rec.normal + Color(1,1,1))
     
     unit_direction = unit_vector(r.direction)
     a = 0.5 * (unit_direction.y+1)
@@ -26,6 +19,15 @@ def main():
     image_width = 400
     image_height = int(image_width/aspect_ration)
     image_height = image_height if image_height > 1 else 1
+
+    world = HittableList()
+    world.add(Sphere(Point3(0, 0, -1), 0.5))
+    world.add(Sphere(Point3(0, -100.5, -1), 100))
+
+    # world.add(Sphere(Point3(-0.5, 0, -1), 0.5))
+    # world.add(Sphere(Point3(0.3, 0, -1), 0.5))
+    # world.add(Sphere(Point3(0, 0.5, -1), 0.5))
+    # world.add(Sphere(Point3(0, 0, -0.3), 0.2))
 
     focal_length = 1
     viewport_height = 2
@@ -51,11 +53,12 @@ def main():
             pixel_center = pixel00_loc + x*pixel_delta_u + y*pixel_delta_v
             ray_direction = pixel_center - camera_center
             r = Ray(camera_center, ray_direction)
-            c = ray_color(r)
+            c = ray_color(r, world)
             pixels[x, y] = (int(255.999*c.x), int(255.999*c.y), int(255.999*c.z))
 
-    #im.show()
+    im.show()
     im.save("output.png")
 
 
-main()
+if __name__ == "__main__":
+    main()
