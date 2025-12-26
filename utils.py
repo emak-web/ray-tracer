@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numbers
 import math
+import random
 
 
 class Vec3:
@@ -38,6 +39,10 @@ class Vec3:
     def length_squared(self) -> numbers.Real:
         return self.x**2 + self.y**2 + self.z**2
 
+    @staticmethod
+    def random(min_v: numbers.Real = 0, max_v: numbers.Real = 1) -> Vec3:
+        return Vec3(random.uniform(min_v, max_v), random.uniform(min_v, max_v), random.uniform(min_v, max_v))
+    
 
 class Point3(Vec3):
     pass
@@ -62,6 +67,22 @@ def unit_vector(u: Vec3) -> Vec3:
     return u / u.length()
 
 
+def random_unit_vector() -> Vec3:
+    while True:
+        p = Vec3.random(-1, 1)
+        lensq = p.length_squared()
+        if 1e-160 < lensq <= 1:
+            return p / math.sqrt(lensq)
+
+
+def random_on_hemisphere(normal: Vec3) -> Vec3:
+    on_unit_sphere = random_unit_vector()
+    if dot(on_unit_sphere, normal) > 0:
+        return on_unit_sphere
+    else:
+        return -on_unit_sphere
+
+
 class Ray:
     def __init__(self, origin: Vec3, direction: Vec3):
         self.origin = origin
@@ -84,6 +105,13 @@ class Interval:
 
     def surrounds(self, x: numbers.Real) -> bool:
         return self.min < x < self.max
+
+    def clamp(self, x: number.Real) -> numbers.Real:
+        if x > self.max:
+            return self.max
+        if x < self.min:
+            return self.min
+        return x
 
 
 Interval.empty = Interval(+math.inf, -math.inf)
