@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 import numbers
 
-from utils import Point3, Vec3, Ray, dot, Interval
+from utils import Point3, Vec3, Ray, dot, Interval, Material
 from math import sqrt
 
 
@@ -10,6 +10,7 @@ from math import sqrt
 class HitRecord:
     p: Point3
     normal: Vec3
+    mat: Material
     t: numbers.Real
     front_face: bool = True
 
@@ -25,9 +26,10 @@ class Hittable(ABC):
         
 
 class Sphere(Hittable):
-    def __init__(self, center: Point3, radius: numbers.Real):
+    def __init__(self, center: Point3, radius: numbers.Real, mat: Material):
         self.center = center
         self.radius = radius
+        self.mat = mat
     
     def hit(self, r: Ray, ray_t: Interval) -> HitRecord:
         oc = self.center - r.origin
@@ -47,7 +49,7 @@ class Sphere(Hittable):
             if not ray_t.surrounds(root):
                 return None
 
-        rec = HitRecord(r.at(root), (r.at(root) - self.center) / self.radius, root)
+        rec = HitRecord(r.at(root), (r.at(root) - self.center) / self.radius, self.mat, root)
         outward_normal = (rec.p - self.center) / self.radius
         rec.set_face_normal(r, outward_normal)
 

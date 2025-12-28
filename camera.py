@@ -1,8 +1,9 @@
 from PIL import Image
-from utils import Color, Ray, Point3, Vec3, unit_vector, random_on_hemisphere
+from utils import Color, Ray, Point3, Vec3, unit_vector, random_on_hemisphere, random_unit_vector, linear_to_gamma
 from hittable import Hittable, HittableList, Sphere, Interval
 import math
 import random
+import numbers
 
 
 class Camera:
@@ -10,6 +11,7 @@ class Camera:
         self.aspect_ration = 16 / 9
         self.image_width = 400
         self.samples_per_pixel = 10
+        self.max_depth = 10
 
     def initalize(self):
         self.image_height = int(self.image_width/self.aspect_ration)
@@ -43,20 +45,29 @@ class Camera:
                 pixel_color = Color(0, 0, 0)
                 for sample in range(self.samples_per_pixel):
                     r = self.get_ray(x, y)
-                    pixel_color += self.ray_color(r, world)
+                    pixel_color += self.ray_color(r, self.max_depth, world)
 
+                
                 intensity = Interval(0.000, 0.999)
                 pixel_color *= self.pixel_samples_scale
-                pixels[x, y] = (int(255.999*intensity.clamp(pixel_color.x)), int(255.999*intensity.clamp(pixel_color.y)), int(255.999*intensity.clamp(pixel_color.z)))
+                r, g, b = linear_to_gamma(pixel_color.x), linear_to_gamma(pixel_color.y), linear_to_gamma(pixel_color.z)
+                pixels[x, y] = (int(255.999*intensity.clamp(r)), int(255.999*intensity.clamp(g)), int(255.999*intensity.clamp(b)))
 
         return im
 
-    def ray_color(self, r: Ray, world: Hittable) -> Color:
-        rec = world.hit(r, Interval(0, math.inf))
+    def ray_color(self, r: Ray, depth: int, world: Hittable) -> Color:
+        if depth <= 0:
+            return Color(0, 0, 0)
+
+        rec = world.hit(r, Interval(0.001, math.inf))
         if rec is not None:
             # return 0.5 * (rec.normal + Color(1,1,1))
-            direction = random_on_hemisphere(rec.normal)
-            return 0.5 * self.ray_color(Ray(rec.p, direction), world)
+            # direction = random_on_hemisphere(rec.normal)
+            # direction = rec.normal + random_unit_vector()
+            attenuation, scattered = rec.mat.scatter(r, rec)
+            return attenuation * self.ray_color(scattered, depth-1, world)
+            
+            # return Color(0, 0, 0)
         
         unit_direction = unit_vector(r.direction)
         a = 0.5 * (unit_direction.y+1)

@@ -1,5 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from hittable import HitRecord
 import numbers
 import math
 import random
@@ -38,6 +42,10 @@ class Vec3:
     
     def length_squared(self) -> numbers.Real:
         return self.x**2 + self.y**2 + self.z**2
+
+    def near_zero(self) -> bool:
+        s = 1e-8
+        return abs(self.x) < s and abs(self.y) < s and abs(self.z) < s  
 
     @staticmethod
     def random(min_v: numbers.Real = 0, max_v: numbers.Real = 1) -> Vec3:
@@ -83,6 +91,17 @@ def random_on_hemisphere(normal: Vec3) -> Vec3:
         return -on_unit_sphere
 
 
+def reflect(v: Vec3, n: Vec3) -> Vec3:
+    return v - 2*dot(v, n)*n
+
+
+def linear_to_gamma(linear_component):
+    if linear_component > 0:
+        return math.sqrt(linear_component)
+
+    return 0
+
+
 class Ray:
     def __init__(self, origin: Vec3, direction: Vec3):
         self.origin = origin
@@ -117,3 +136,32 @@ class Interval:
 Interval.empty = Interval(+math.inf, -math.inf)
 Interval.universe = Interval(-math.inf, +math.inf)
 
+
+class Material(ABC):
+    @abstractmethod
+    def scatter(self, r_in: Ray, rec: HitRecord) -> bool:
+        return None
+
+
+class Lambertian(Material):
+    def __init__(self, albedo: Color):
+        self.albedo = albedo
+
+    def scatter(self, r_in: Ray, rec: HitRecord) -> bool:
+        scatter_direction = rec.normal + random_unit_vector()
+
+        if scatter_direction.near_zero():
+            scatter_direction = rec.normal
+        
+        scattered = Ray(rec.p, scatter_direction)
+        return self.albedo, scattered
+
+
+class Metal(Material):
+    def __init__(self, albedo: Color):
+        self.albedo = albedo
+
+    def scatter(self, r_in: Ray, rec: HitRecord) -> bool:
+        reflected = reflect(r_in.direction, rec.normal)
+        scattered = Ray(rec.p, reflected)
+        return self.albedo, scattered
