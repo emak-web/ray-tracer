@@ -1,6 +1,8 @@
-from PIL import Image
-from utils import Color, Ray, Point3, Vec3, unit_vector, random_on_hemisphere, random_unit_vector, linear_to_gamma
+from __future__ import annotations
+from utils import Color, Ray, Point3, Vec3, unit_vector, linear_to_gamma
+from materials import random_on_hemisphere, random_unit_vector
 from hittable import Hittable, HittableList, Sphere, Interval
+from PIL import Image
 import math
 import random
 import numbers
@@ -13,7 +15,7 @@ class Camera:
         self.samples_per_pixel = 10
         self.max_depth = 10
 
-    def initalize(self):
+    def initialize(self):
         self.image_height = int(self.image_width/self.aspect_ration)
         self.image_height = self.image_height if self.image_height > 1 else 1
 
@@ -34,7 +36,7 @@ class Camera:
         self.pixel00_loc = self.viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v)
 
     def render(self, world: Hittable):
-        self.initalize()
+        self.initialize()
         im = Image.new("RGB", (self.image_width, self.image_height))
 
         pixels = im.load()
@@ -61,12 +63,8 @@ class Camera:
 
         rec = world.hit(r, Interval(0.001, math.inf))
         if rec is not None:
-            # return 0.5 * (rec.normal + Color(1,1,1))
-            # direction = random_on_hemisphere(rec.normal)
-            # direction = rec.normal + random_unit_vector()
             attenuation, scattered = rec.mat.scatter(r, rec)
             return attenuation * self.ray_color(scattered, depth-1, world)
-            
             # return Color(0, 0, 0)
         
         unit_direction = unit_vector(r.direction)

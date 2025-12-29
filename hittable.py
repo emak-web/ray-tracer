@@ -1,9 +1,13 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from utils import Point3, Vec3, Ray
+    from materials import Material
+from utils import dot, Interval
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 import numbers
-
-from utils import Point3, Vec3, Ray, dot, Interval, Material
-from math import sqrt
+import math
 
 
 @dataclass
@@ -41,7 +45,7 @@ class Sphere(Hittable):
         if d < 0:
             return None
         
-        sqrtd = sqrt(d)
+        sqrtd = math.sqrt(d)
         root = (h - sqrtd) / a
         
         if not ray_t.surrounds(root):
