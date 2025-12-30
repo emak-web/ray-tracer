@@ -1,9 +1,9 @@
-from utils import Color, Point3
+from utils import Color, Point3, Vec3
 from materials import Metal, Lambertian, Dielectric
 from hittable import HittableList, Sphere
 from camera import Camera
 
-from PIL import Image
+import math
 
 
 def main():
@@ -23,8 +23,13 @@ def main():
     cam = Camera()
     cam.aspect_ration = 16 / 9
     cam.image_width = 400
-    cam.samples_per_pixel = 100
+    cam.samples_per_pixel = 10
     cam.max_depth = 50
+    
+    cam.vfov = 20
+    cam.lookfrom = Point3(-2, 2, 1)
+    cam.lookat = Point3(0, 0, -1)
+    cam.vup = Vec3(0, 1, 0)
 
     im = cam.render(world)
 

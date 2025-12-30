@@ -1,9 +1,10 @@
 from __future__ import annotations
-from utils import Vec3, Ray, Color, dot, cross, unit_vector
+from utils import Vec3, Ray, Color, dot, unit_vector
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from hittable import HitRecord
 from abc import ABC, abstractmethod
+
 import numbers
 import random
 import math

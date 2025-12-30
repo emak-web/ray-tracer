@@ -1,11 +1,9 @@
 from __future__ import annotations
-from utils import Color, Ray, Point3, Vec3, unit_vector, linear_to_gamma
-from materials import random_on_hemisphere, random_unit_vector
-from hittable import Hittable, HittableList, Sphere, Interval
+from utils import Color, Ray, Point3, Vec3, cross, unit_vector, linear_to_gamma
+from hittable import Hittable, Interval
 from PIL import Image
 import math
 import random
-import numbers
 
 
 class Camera:
@@ -15,24 +13,36 @@ class Camera:
         self.samples_per_pixel = 10
         self.max_depth = 10
 
+        self.vfov = 90
+        self.lookfrom = Point3(0, 0, 0)
+        self.lookat = Point3(0, 0, -1)
+        self.vup = Vec3(0, 1, 0)
+
     def initialize(self):
         self.image_height = int(self.image_width/self.aspect_ration)
         self.image_height = self.image_height if self.image_height > 1 else 1
 
         self.pixel_samples_scale = 1 / self.samples_per_pixel
 
-        self.focal_length = 1
-        self.viewport_height = 2
-        self.viewport_width = self.viewport_height*self.image_width/self.image_height
-        self.camera_center = Point3(0, 0, 0)
+        self.camera_center = self.lookfrom
 
-        self.viewport_u = Vec3(self.viewport_width, 0, 0)
-        self.viewport_v = Vec3(0, -self.viewport_height, 0)
+        self.focal_length = (self.lookfrom - self.lookat).length()
+        self.theta = math.radians(self.vfov)
+        self.h = math.tan(self.theta/2)
+        self.viewport_height = 2 * self.h * self.focal_length
+        self.viewport_width = self.viewport_height*(self.image_width/self.image_height)
+
+        self.w = unit_vector(self.lookfrom - self.lookat)
+        self.u = unit_vector(cross(self.vup, self.w))
+        self.v = cross(self.w, self.u)
+
+        self.viewport_u = self.viewport_width * self.u
+        self.viewport_v = self.viewport_height * -self.v
 
         self.pixel_delta_u = self.viewport_u / self.image_width
         self.pixel_delta_v = self.viewport_v / self.image_height
 
-        self.viewport_upper_left = self.camera_center - Vec3(0, 0, self.focal_length) - self.viewport_u/2 - self.viewport_v/2
+        self.viewport_upper_left = self.camera_center - (self.focal_length * self.w) - self.viewport_u/2 - self.viewport_v/2
         self.pixel00_loc = self.viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v)
 
     def render(self, world: Hittable):
