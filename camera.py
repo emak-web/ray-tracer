@@ -1,5 +1,5 @@
 from __future__ import annotations
-from utils import Color, Ray, Point3, Vec3, cross, unit_vector, linear_to_gamma
+from utils import Color, Ray, Point3, Vec3, cross, random_in_unit_disk, unit_vector, linear_to_gamma
 from hittable import Hittable, Interval
 from PIL import Image
 import math
@@ -18,6 +18,9 @@ class Camera:
         self.lookat = Point3(0, 0, -1)
         self.vup = Vec3(0, 1, 0)
 
+        self.defocus_angle = 0
+        self.focus_dist = 10
+
     def initialize(self):
         self.image_height = int(self.image_width/self.aspect_ration)
         self.image_height = self.image_height if self.image_height > 1 else 1
@@ -26,10 +29,9 @@ class Camera:
 
         self.camera_center = self.lookfrom
 
-        self.focal_length = (self.lookfrom - self.lookat).length()
         self.theta = math.radians(self.vfov)
         self.h = math.tan(self.theta/2)
-        self.viewport_height = 2 * self.h * self.focal_length
+        self.viewport_height = 2 * self.h * self.focus_dist
         self.viewport_width = self.viewport_height*(self.image_width/self.image_height)
 
         self.w = unit_vector(self.lookfrom - self.lookat)
@@ -42,8 +44,12 @@ class Camera:
         self.pixel_delta_u = self.viewport_u / self.image_width
         self.pixel_delta_v = self.viewport_v / self.image_height
 
-        self.viewport_upper_left = self.camera_center - (self.focal_length * self.w) - self.viewport_u/2 - self.viewport_v/2
+        self.viewport_upper_left = self.camera_center - (self.focus_dist * self.w) - self.viewport_u/2 - self.viewport_v/2
         self.pixel00_loc = self.viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v)
+
+        self.defocus_radius = self.focus_dist * math.tan(math.radians(self.defocus_angle / 2))
+        self.defocus_disk_u = self.u * self.defocus_radius
+        self.defocus_disk_v = self.v * self.defocus_radius
 
     def render(self, world: Hittable):
         self.initialize()
@@ -83,11 +89,17 @@ class Camera:
 
     def get_ray(self, i, j):
         offset = self.sample_square()
-        pixel_center = self.pixel00_loc + (i + offset.x)*self.pixel_delta_u + (j + offset.y)*self.pixel_delta_v
-        ray_direction = pixel_center - self.camera_center
+        pixel_sample = self.pixel00_loc + (i + offset.x)*self.pixel_delta_u + (j + offset.y)*self.pixel_delta_v
 
-        return Ray(self.camera_center, ray_direction)
+        ray_origin = self.camera_center if self.defocus_angle <= 0 else self.defocus_disk_sample()
+        ray_direction = pixel_sample - ray_origin
+
+        return Ray(ray_origin, ray_direction)
 
     def sample_square(self):
         return Vec3(random.random() - 0.5, random.random() - 0.5, 0)
+    
+    def defocus_disk_sample(self):
+        p = random_in_unit_disk()
+        return self.camera_center + (p.x * self.defocus_disk_u) + (p.y * self.defocus_disk_v)
 

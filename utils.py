@@ -71,6 +71,13 @@ def unit_vector(u: Vec3) -> Vec3:
     return u / u.length()
 
 
+def random_in_unit_disk():
+    while True:
+        p = Vec3(random.uniform(-1, 1), random.uniform(-1, 1), 0)
+        if p.length_squared() < 1:
+            return p
+
+
 def linear_to_gamma(linear_component):
     if linear_component > 0:
         return math.sqrt(linear_component)
