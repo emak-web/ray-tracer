@@ -3,7 +3,6 @@ from materials import Metal, Lambertian, Dielectric
 from hittable import HittableList, Sphere
 from camera import Camera
 
-import math
 import random
 
 
@@ -61,7 +60,7 @@ def main():
 
     im = cam.render(world)
 
-    im.save("output.png")
+    im.save("output2.png")
     im.show()
 
 
